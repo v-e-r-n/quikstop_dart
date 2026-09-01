@@ -55,6 +55,10 @@ class QuikstopPinFieldState extends State<QuikstopPinField> {
       }
     });
 
+    _focusNode.addListener(() {
+      if (mounted) setState(() {});
+    });
+
     if (widget.autoFocus) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _focusNode.requestFocus();
@@ -103,11 +107,11 @@ class QuikstopPinFieldState extends State<QuikstopPinField> {
               ),
             ),
           ),
-          // 2. Visible visual pin boxes driven by controller state
-          ValueListenableBuilder<TextEditingValue>(
-            valueListenable: _controller,
-            builder: (context, value, _) {
-              final text = value.text;
+          // 2. Visible visual pin boxes driven by controller & focus state
+          ListenableBuilder(
+            listenable: Listenable.merge([_controller, _focusNode]),
+            builder: (context, _) {
+              final text = _controller.text;
               final focused = _focusNode.hasFocus;
 
               return LayoutBuilder(
