@@ -23,6 +23,8 @@ class QuikstopAuthCard extends StatefulWidget {
   final String? inputHint;
   final IconData? inputIcon;
   final TextInputType? keyboardType;
+  final String requestButtonText;
+  final String verifyButtonText;
   final Color primaryColor;
   final Color cardColor;
   final Color textColor;
@@ -42,6 +44,8 @@ class QuikstopAuthCard extends StatefulWidget {
     this.inputHint,
     this.inputIcon,
     this.keyboardType,
+    this.requestButtonText = 'Send Verification Code',
+    this.verifyButtonText = 'Verify & Sign In',
     this.primaryColor = const Color(0xFF10B981),
     this.cardColor = const Color(0xFF1E293B),
     this.textColor = Colors.white,
@@ -297,7 +301,7 @@ class _QuikstopAuthCardState extends State<QuikstopAuthCard> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
                           ),
                           child: Text(
-                            _showOTPField ? 'Verify & Sign In' : 'Send Verification Code',
+                            _showOTPField ? widget.verifyButtonText : widget.requestButtonText,
                             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                           ),
                         ),
