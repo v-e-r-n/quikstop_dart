@@ -24,7 +24,6 @@ class QuikstopAuthCard extends StatefulWidget {
   final IconData? inputIcon;
   final TextInputType? keyboardType;
   final String requestButtonText;
-  final String verifyButtonText;
   final Color primaryColor;
   final Color cardColor;
   final Color textColor;
@@ -45,7 +44,6 @@ class QuikstopAuthCard extends StatefulWidget {
     this.inputIcon,
     this.keyboardType,
     this.requestButtonText = 'Send Verification Code',
-    this.verifyButtonText = 'Verify & Sign In',
     this.primaryColor = const Color(0xFF10B981),
     this.cardColor = const Color(0xFF1E293B),
     this.textColor = Colors.white,
@@ -287,24 +285,44 @@ class _QuikstopAuthCardState extends State<QuikstopAuthCard> {
                             _otpCode = text;
                           },
                         ),
+                        const SizedBox(height: 24),
+                        if (_isLoading)
+                          Center(child: CircularProgressIndicator(color: widget.primaryColor))
+                        else
+                          Center(
+                            child: TextButton.icon(
+                              onPressed: _submitRecipient,
+                              icon: Icon(Icons.refresh_rounded, size: 16, color: widget.textColor.withValues(alpha: 0.7)),
+                              label: Text(
+                                "Didn't receive a code? Resend",
+                                style: TextStyle(
+                                  color: widget.textColor.withValues(alpha: 0.7),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ),
                       ],
-                      const SizedBox(height: 24),
-                      if (_isLoading)
-                        Center(child: CircularProgressIndicator(color: widget.primaryColor))
-                      else
-                        ElevatedButton(
-                          onPressed: _showOTPField ? _submitOTP : _submitRecipient,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: widget.primaryColor,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 14.0),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                      if (!_showOTPField) ...[
+                        const SizedBox(height: 24),
+                        if (_isLoading)
+                          Center(child: CircularProgressIndicator(color: widget.primaryColor))
+                        else
+                          ElevatedButton(
+                            onPressed: _submitRecipient,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: widget.primaryColor,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14.0),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                            ),
+                            child: Text(
+                              widget.requestButtonText,
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
                           ),
-                          child: Text(
-                            _showOTPField ? widget.verifyButtonText : widget.requestButtonText,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                          ),
-                        ),
+                      ],
                       if (_errorMessage != null)
                         Padding(
                           padding: const EdgeInsets.only(top: 16.0),
