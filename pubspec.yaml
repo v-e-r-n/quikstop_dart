@@ -1,5 +1,5 @@
 name: quikstop_dart
-description: "A cohesive Dart & Flutter client toolkit for quikstop backends (OTP authentication, JWT session management, automatic 401 refresh interceptor, real-time SSE streams, and prebuilt auth widgets)."
+description: "A cohesive Dart & Flutter client toolkit for quikstop backends (OTP authentication, JWT token refresh, real-time SSE streams, and prebuilt auth widgets)."
 version: 0.1.0
 publish_to: 'none'
 
@@ -11,7 +11,6 @@ dependencies:
   flutter:
     sdk: flutter
   http: ^1.2.0
-  dio: ^5.7.0
   web: ^1.1.1
   otp_pin_field: ^1.4.1
 

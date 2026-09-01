@@ -66,19 +66,13 @@ QuikstopAuthCard(
 );
 ```
 
-### 3. Automatic Token Refresh with Dio
+### 3. Session & Token Refresh
 
-Add `QuikstopAuthInterceptor` to your authenticated Dio instance:
+Refresh an expired session with your refresh token:
 
 ```dart
-final dio = Dio();
-
-dio.interceptors.add(quikstop.createAuthInterceptor(
-  getAccessToken: () => myStorage.getAccessToken(),
-  getRefreshToken: () => myStorage.getRefreshToken(),
-  onTokenRefreshed: (AuthTokens tokens) => myStorage.save(tokens),
-  onLogout: () => authState.logout(),
-));
+final newTokens = await quikstop.refresh(storedRefreshToken);
+print('New access token: ${newTokens.accessToken}');
 ```
 
 ### 4. Real-time Events Stream (SSE)

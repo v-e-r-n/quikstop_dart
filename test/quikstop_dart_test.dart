@@ -65,5 +65,31 @@ void main() {
         throwsA(isA<InvalidCodeException>()),
       );
     });
+
+    test('refresh parses refreshed AuthTokens', () async {
+      late http.Request capturedRequest;
+      final mockClient = MockClient((request) async {
+        capturedRequest = request as http.Request;
+        return http.Response(
+          jsonEncode({
+            'token': 'new-access-jwt-token',
+            'refresh_token': 'new-refresh-jwt-token',
+          }),
+          200,
+        );
+      });
+
+      final qs = QuikstopClient(
+        baseUrl: Uri.parse('https://api.example.com'),
+        httpClient: mockClient,
+      );
+
+      final tokens = await qs.refresh('old-refresh-jwt-token');
+      expect(capturedRequest.url.path, '/api/v1/auth/refresh');
+      final body = jsonDecode(capturedRequest.body);
+      expect(body['refresh_token'], 'old-refresh-jwt-token');
+      expect(tokens.accessToken, 'new-access-jwt-token');
+      expect(tokens.refreshToken, 'new-refresh-jwt-token');
+    });
   });
 }

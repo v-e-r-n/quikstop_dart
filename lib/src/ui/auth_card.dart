@@ -27,6 +27,8 @@ class QuikstopAuthCard extends StatefulWidget {
   final Color cardColor;
   final Color textColor;
   final int codeLength;
+  final BoxConstraints? constraints;
+  final EdgeInsetsGeometry? padding;
   final String Function(String input)? inputValidator;
 
   const QuikstopAuthCard({
@@ -44,6 +46,8 @@ class QuikstopAuthCard extends StatefulWidget {
     this.cardColor = const Color(0xFF1E293B),
     this.textColor = Colors.white,
     this.codeLength = 6,
+    this.constraints,
+    this.padding,
     this.inputValidator,
   });
 
@@ -162,142 +166,169 @@ class _QuikstopAuthCardState extends State<QuikstopAuthCard> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(maxWidth: 440),
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
-      child: Card(
-        color: widget.cardColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
-        child: Padding(
-          padding: const EdgeInsets.all(32.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (widget.logo != null) ...[
-                Center(child: widget.logo!),
-                const SizedBox(height: 16),
-              ],
-              Center(
-                child: Text(
-                  widget.appTitle,
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -0.5,
-                    color: widget.primaryColor,
+    final effectiveConstraints = widget.constraints ?? const BoxConstraints(maxWidth: 440);
+
+    return LayoutBuilder(
+      builder: (context, parentConstraints) {
+        final isNarrow = parentConstraints.maxWidth < 400;
+        final innerPadding = widget.padding ??
+            EdgeInsets.symmetric(
+              horizontal: isNarrow ? 20.0 : 32.0,
+              vertical: isNarrow ? 24.0 : 32.0,
+            );
+
+        return Center(
+          child: SingleChildScrollView(
+            child: Container(
+              constraints: effectiveConstraints,
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+              child: Card(
+                color: widget.cardColor,
+                elevation: 4.0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+                child: Padding(
+                  padding: innerPadding,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (widget.logo != null) ...[
+                        Center(child: widget.logo!),
+                        const SizedBox(height: 16),
+                      ],
+                      Center(
+                        child: Text(
+                          widget.appTitle,
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.5,
+                            color: widget.primaryColor,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      if (!_showOTPField) ...[
+                        TextField(
+                          controller: _recipientController,
+                          keyboardType: _resolvedKeyboardType,
+                          textInputAction: TextInputAction.done,
+                          onSubmitted: (_) => _submitRecipient(),
+                          style: TextStyle(color: widget.textColor),
+                          decoration: InputDecoration(
+                            labelText: _resolvedLabel,
+                            hintText: widget.inputHint,
+                            hintStyle: TextStyle(color: widget.textColor.withValues(alpha: 0.4)),
+                            labelStyle: TextStyle(color: widget.textColor.withValues(alpha: 0.7)),
+                            prefixIcon: Icon(_resolvedIcon, color: widget.primaryColor),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                              borderSide: BorderSide(color: widget.textColor.withValues(alpha: 0.2)),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                              borderSide: BorderSide(color: widget.primaryColor, width: 2),
+                            ),
+                          ),
+                        ),
+                      ] else ...[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'Code sent to: ${_recipientController.text}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: widget.textColor.withValues(alpha: 0.7),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: _isLoading
+                                  ? null
+                                  : () {
+                                      setState(() {
+                                        _showOTPField = false;
+                                        _otpCode = '';
+                                        _errorMessage = null;
+                                      });
+                                    },
+                              child: Text('Change', style: TextStyle(color: widget.primaryColor)),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        LayoutBuilder(
+                          builder: (context, pinConstraints) {
+                            // Calculate adaptive field width based on available inner width
+                            final availableWidth = pinConstraints.maxWidth;
+                            final gapTotal = (widget.codeLength - 1) * 8.0;
+                            final calculatedWidth = ((availableWidth - gapTotal) / widget.codeLength).clamp(28.0, 48.0);
+
+                            return OtpPinField(
+                              key: _otpPinFieldController,
+                              onSubmit: (String code) {
+                                _otpCode = code;
+                                _submitOTP();
+                              },
+                              onChange: (text) {
+                                _otpCode = text;
+                              },
+                              otpPinFieldStyle: OtpPinFieldStyle(
+                                defaultFieldBorderColor: Colors.grey,
+                                activeFieldBorderColor: widget.primaryColor,
+                                textStyle: TextStyle(
+                                  color: widget.textColor,
+                                  fontSize: calculatedWidth < 34 ? 16 : 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              maxLength: widget.codeLength,
+                              autoFocus: true,
+                              cursorColor: widget.primaryColor,
+                              fieldWidth: calculatedWidth,
+                              fieldHeight: 48,
+                              otpPinFieldDecoration: OtpPinFieldDecoration.defaultPinBoxDecoration,
+                            );
+                          },
+                        ),
+                      ],
+                      const SizedBox(height: 24),
+                      if (_isLoading)
+                        Center(child: CircularProgressIndicator(color: widget.primaryColor))
+                      else
+                        ElevatedButton(
+                          onPressed: _showOTPField ? _submitOTP : _submitRecipient,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: widget.primaryColor,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14.0),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                          ),
+                          child: Text(
+                            _showOTPField ? 'Verify & Sign In' : 'Send Verification Code',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                        ),
+                      if (_errorMessage != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 16.0),
+                          child: Text(
+                            _errorMessage!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: Colors.redAccent, fontSize: 13),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ),
-              const SizedBox(height: 32),
-              if (!_showOTPField) ...[
-                TextField(
-                  controller: _recipientController,
-                  keyboardType: _resolvedKeyboardType,
-                  textInputAction: TextInputAction.done,
-                  onSubmitted: (_) => _submitRecipient(),
-                  style: TextStyle(color: widget.textColor),
-                  decoration: InputDecoration(
-                    labelText: _resolvedLabel,
-                    hintText: widget.inputHint,
-                    hintStyle: TextStyle(color: widget.textColor.withValues(alpha: 0.4)),
-                    labelStyle: TextStyle(color: widget.textColor.withValues(alpha: 0.7)),
-                    prefixIcon: Icon(_resolvedIcon, color: widget.primaryColor),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                      borderSide: BorderSide(color: widget.textColor.withValues(alpha: 0.2)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                      borderSide: BorderSide(color: widget.primaryColor, width: 2),
-                    ),
-                  ),
-                ),
-              ] else ...[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Code sent to: ${_recipientController.text}',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: widget.textColor.withValues(alpha: 0.7),
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: _isLoading
-                          ? null
-                          : () {
-                              setState(() {
-                                _showOTPField = false;
-                                _otpCode = '';
-                                _errorMessage = null;
-                              });
-                            },
-                      child: Text('Change', style: TextStyle(color: widget.primaryColor)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                OtpPinField(
-                  key: _otpPinFieldController,
-                  onSubmit: (String code) {
-                    _otpCode = code;
-                    _submitOTP();
-                  },
-                  onChange: (text) {
-                    _otpCode = text;
-                  },
-                  otpPinFieldStyle: OtpPinFieldStyle(
-                    defaultFieldBorderColor: Colors.grey,
-                    activeFieldBorderColor: widget.primaryColor,
-                    textStyle: TextStyle(
-                      color: widget.textColor,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  maxLength: widget.codeLength,
-                  autoFocus: true,
-                  cursorColor: widget.primaryColor,
-                  fieldWidth: 36,
-                  fieldHeight: 48,
-                  otpPinFieldDecoration: OtpPinFieldDecoration.defaultPinBoxDecoration,
-                ),
-              ],
-              const SizedBox(height: 24),
-              if (_isLoading)
-                Center(child: CircularProgressIndicator(color: widget.primaryColor))
-              else
-                ElevatedButton(
-                  onPressed: _showOTPField ? _submitOTP : _submitRecipient,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: widget.primaryColor,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14.0),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
-                  ),
-                  child: Text(
-                    _showOTPField ? 'Verify & Sign In' : 'Send Verification Code',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                ),
-              if (_errorMessage != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 16.0),
-                  child: Text(
-                    _errorMessage!,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.redAccent, fontSize: 13),
-                  ),
-                ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
