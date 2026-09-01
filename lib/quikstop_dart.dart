@@ -12,6 +12,7 @@ export 'src/otp/client.dart';
 export 'src/events/models.dart';
 export 'src/events/client.dart';
 export 'src/ui/auth_card.dart';
+export 'src/ui/pin_field.dart';
 
 /// The unified Quikstop client combining OTP authentication, JWT token refresh,
 /// and real-time SSE event streaming.

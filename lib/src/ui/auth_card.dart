@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:otp_pin_field/otp_pin_field.dart';
 import '../auth/models.dart';
 import '../otp/client.dart';
+import 'pin_field.dart';
 
 /// Recipient type for the passwordless authentication card.
 enum QuikstopRecipientType {
@@ -12,7 +12,7 @@ enum QuikstopRecipientType {
 
 /// A complete, styled, responsive Card widget for Passwordless OTP sign-in.
 /// Supports emails, phone numbers, and custom identifiers.
-/// Uses [otp_pin_field] for entering multi-digit verification codes.
+/// Uses native [QuikstopPinField] for entering verification codes without overflow bugs.
 class QuikstopAuthCard extends StatefulWidget {
   final QuikstopOTPClient client;
   final ValueChanged<AuthTokens> onSuccess;
@@ -57,7 +57,7 @@ class QuikstopAuthCard extends StatefulWidget {
 
 class _QuikstopAuthCardState extends State<QuikstopAuthCard> {
   final _recipientController = TextEditingController();
-  final _otpPinFieldController = GlobalKey<OtpPinFieldState>();
+  final _pinFieldKey = GlobalKey<QuikstopPinFieldState>();
 
   bool _showOTPField = false;
   bool _isLoading = false;
@@ -156,7 +156,7 @@ class _QuikstopAuthCardState extends State<QuikstopAuthCard> {
       widget.onSuccess(tokens);
     } catch (e) {
       if (!mounted) return;
-      _otpPinFieldController.currentState?.clearOtp();
+      _pinFieldKey.currentState?.clear();
       setState(() {
         _isLoading = false;
         _errorMessage = e is QuikstopException ? e.message : e.toString();
@@ -259,39 +259,18 @@ class _QuikstopAuthCardState extends State<QuikstopAuthCard> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 16),
-                        LayoutBuilder(
-                          builder: (context, pinConstraints) {
-                            // Calculate adaptive field width based on available inner width
-                            final availableWidth = pinConstraints.maxWidth;
-                            final gapTotal = (widget.codeLength - 1) * 8.0;
-                            final calculatedWidth = ((availableWidth - gapTotal) / widget.codeLength).clamp(28.0, 48.0);
-
-                            return OtpPinField(
-                              key: _otpPinFieldController,
-                              onSubmit: (String code) {
-                                _otpCode = code;
-                                _submitOTP();
-                              },
-                              onChange: (text) {
-                                _otpCode = text;
-                              },
-                              otpPinFieldStyle: OtpPinFieldStyle(
-                                defaultFieldBorderColor: Colors.grey,
-                                activeFieldBorderColor: widget.primaryColor,
-                                textStyle: TextStyle(
-                                  color: widget.textColor,
-                                  fontSize: calculatedWidth < 34 ? 16 : 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              maxLength: widget.codeLength,
-                              autoFocus: true,
-                              cursorColor: widget.primaryColor,
-                              fieldWidth: calculatedWidth,
-                              fieldHeight: 48,
-                              otpPinFieldDecoration: OtpPinFieldDecoration.defaultPinBoxDecoration,
-                            );
+                        const SizedBox(height: 20),
+                        QuikstopPinField(
+                          key: _pinFieldKey,
+                          length: widget.codeLength,
+                          primaryColor: widget.primaryColor,
+                          textColor: widget.textColor,
+                          onCompleted: (String code) {
+                            _otpCode = code;
+                            _submitOTP();
+                          },
+                          onChanged: (text) {
+                            _otpCode = text;
                           },
                         ),
                       ],
