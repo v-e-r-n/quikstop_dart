@@ -28,6 +28,7 @@ class QuikstopAuthCard extends StatefulWidget {
   final Color cardColor;
   final Color textColor;
   final int codeLength;
+  final bool autoFocus;
   final BoxConstraints? constraints;
   final EdgeInsetsGeometry? padding;
   final String Function(String input)? inputValidator;
@@ -48,6 +49,7 @@ class QuikstopAuthCard extends StatefulWidget {
     this.cardColor = const Color(0xFF1E293B),
     this.textColor = Colors.white,
     this.codeLength = 6,
+    this.autoFocus = true,
     this.constraints,
     this.padding,
     this.inputValidator,
@@ -223,6 +225,7 @@ class _QuikstopAuthCardState extends State<QuikstopAuthCard> {
                       if (!_showOTPField) ...[
                         TextField(
                           controller: _recipientController,
+                          autofocus: widget.autoFocus,
                           keyboardType: _resolvedKeyboardType,
                           textInputAction: TextInputAction.done,
                           onSubmitted: (_) => _submitRecipient(),
