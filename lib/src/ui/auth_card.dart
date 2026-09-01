@@ -16,7 +16,7 @@ enum QuikstopRecipientType {
 class QuikstopAuthCard extends StatefulWidget {
   final QuikstopOTPClient client;
   final ValueChanged<AuthTokens> onSuccess;
-  final String appTitle;
+  final String? appTitle;
   final Widget? logo;
   final QuikstopRecipientType recipientType;
   final String? inputLabel;
@@ -35,7 +35,7 @@ class QuikstopAuthCard extends StatefulWidget {
     super.key,
     required this.client,
     required this.onSuccess,
-    this.appTitle = 'SIGN IN',
+    this.appTitle,
     this.logo,
     this.recipientType = QuikstopRecipientType.email,
     this.inputLabel,
@@ -192,21 +192,20 @@ class _QuikstopAuthCardState extends State<QuikstopAuthCard> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      if (widget.logo != null) ...[
-                        Center(child: widget.logo!),
-                        const SizedBox(height: 16),
-                      ],
-                      Center(
-                        child: Text(
-                          widget.appTitle,
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -0.5,
-                            color: widget.primaryColor,
+                      if (widget.logo != null)
+                        Center(child: widget.logo!)
+                      else if (widget.appTitle != null)
+                        Center(
+                          child: Text(
+                            widget.appTitle!,
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -0.5,
+                              color: widget.primaryColor,
+                            ),
                           ),
                         ),
-                      ),
                       const SizedBox(height: 32),
                       if (!_showOTPField) ...[
                         TextField(
