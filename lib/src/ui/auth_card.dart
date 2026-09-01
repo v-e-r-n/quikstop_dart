@@ -193,7 +193,18 @@ class _QuikstopAuthCardState extends State<QuikstopAuthCard> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       if (widget.logo != null)
-                        Center(child: widget.logo!)
+                        Center(
+                          child: Semantics(
+                            label: widget.appTitle ?? 'Application Logo',
+                            image: true,
+                            child: widget.appTitle != null
+                                ? Tooltip(
+                                    message: widget.appTitle!,
+                                    child: widget.logo!,
+                                  )
+                                : widget.logo!,
+                          ),
+                        )
                       else if (widget.appTitle != null)
                         Center(
                           child: Text(
