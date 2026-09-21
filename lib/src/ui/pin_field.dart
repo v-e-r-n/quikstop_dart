@@ -37,13 +37,14 @@ class QuikstopPinField extends StatefulWidget {
   State<QuikstopPinField> createState() => QuikstopPinFieldState();
 }
 
-class QuikstopPinFieldState extends State<QuikstopPinField> {
+class QuikstopPinFieldState extends State<QuikstopPinField> with WidgetsBindingObserver {
   late final TextEditingController _controller;
   late final FocusNode _focusNode;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _controller = TextEditingController();
     _focusNode = FocusNode();
 
@@ -61,13 +62,33 @@ class QuikstopPinFieldState extends State<QuikstopPinField> {
 
     if (widget.autoFocus) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _focusNode.requestFocus();
+        _requestKeyboardFocus();
       });
     }
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      // Re-engage soft keyboard when user returns to app from SMS app
+      _requestKeyboardFocus();
+    }
+  }
+
+  void _requestKeyboardFocus() {
+    if (!mounted) return;
+    _focusNode.unfocus();
+    Future.microtask(() {
+      if (mounted) {
+        _focusNode.requestFocus();
+        SystemChannels.textInput.invokeMethod('TextInput.show');
+      }
+    });
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _controller.dispose();
     _focusNode.dispose();
     super.dispose();
@@ -76,13 +97,13 @@ class QuikstopPinFieldState extends State<QuikstopPinField> {
   /// Clears the current PIN input and requests keyboard focus.
   void clear() {
     _controller.clear();
-    _focusNode.requestFocus();
+    _requestKeyboardFocus();
   }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => _focusNode.requestFocus(),
+      onTap: _requestKeyboardFocus,
       behavior: HitTestBehavior.opaque,
       child: Stack(
         alignment: Alignment.center,
